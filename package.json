@@ -1,6 +1,6 @@
 {
   "name": "ghostdep",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "description": "Chrome extension: checks pip, npm and cargo install commands in AI chat answers and flags packages that are missing, brand new, or look-alikes.",
   "author": "Udaykishore Resu",

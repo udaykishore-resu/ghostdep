@@ -140,6 +140,18 @@
     .empty { padding:14px 12px; color: var(--mut); }
   `;
 
+  // Scroll the code block into view and flash it. The flash matters on short pages, where the block is
+  // already on screen and scrolling alone would look like the button did nothing.
+  function reveal(target) {
+    // A text area has no visible box of its own on GitHub's file view; its parent covers the code.
+    const box = target.tagName === 'TEXTAREA' ? target.parentElement || target : target;
+    box.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    box.removeAttribute('data-ghostdep-flash');
+    void box.offsetWidth; // restart the animation when clicked twice
+    box.setAttribute('data-ghostdep-flash', '');
+    setTimeout(() => box.removeAttribute('data-ghostdep-flash'), 1700);
+  }
+
   function el(tag, cls, text) {
     const e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -203,7 +215,7 @@
           const jump = el('button', 'btn', 'Show in page');
           jump.addEventListener('click', () => {
             const target = f.els.find((e) => e.isConnected);
-            if (target) target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            if (target) reveal(target);
           });
           acts.appendChild(jump);
           if (v.url) {

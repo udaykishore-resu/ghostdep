@@ -89,6 +89,13 @@ async function ghostdep() {
   check('text the user typed (textarea / contenteditable) is never looked up', !state.rows.some((r) => /typed-by|also-typed/.test(r)));
   const requets = state.rows.find((r) => r.startsWith('requets'));
   check('typo row suggests the real package', requets && /requests/.test(requets), requets);
+  await page.evaluate(() => {
+    const r = document.querySelector('ghostdep-panel').shadowRoot;
+    [...r.querySelectorAll('.btn')].find((b) => b.textContent === 'Show in page').click();
+  });
+  check('"Show in page" highlights the block it points at', (await page.evaluate(() => document.querySelectorAll('[data-ghostdep-flash]').length)) === 1);
+  await page.waitForFunction(() => document.querySelectorAll('[data-ghostdep-flash]').length === 0, null, { timeout: 5000 }).catch(() => {});
+  check('the highlight clears by itself', (await page.evaluate(() => document.querySelectorAll('[data-ghostdep-flash]').length)) === 0);
   await page.screenshot({ path: path.join(OUT, 'ghostdep.png'), fullPage: true });
 
   // Real, established, not on the built-in list: must come back ok from the live registry.
@@ -248,6 +255,21 @@ async function ghostdepSandboxedPage() {
         });
         return r[0].result;
       });
+    const showInPage = () =>
+      sw.evaluate(async () => {
+        const [tab] = await chrome.tabs.query({ url: 'https://raw.githubusercontent.com/*' });
+        const r = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => {
+            const root = document.querySelector('ghostdep-panel').shadowRoot;
+            if (!root.querySelector('.card')) root.querySelector('.pill').click();
+            [...root.querySelectorAll('.btn')].find((b) => b.textContent === 'Show in page').click();
+            const hit = document.querySelector('[data-ghostdep-flash]');
+            return hit ? hit.tagName + ':' + getComputedStyle(hit).animationName : null;
+          },
+        });
+        return r[0].result;
+      });
     const clickRegistryLink = () =>
       sw.evaluate(async () => {
         const [tab] = await chrome.tabs.query({ url: 'https://raw.githubusercontent.com/*' });
@@ -271,6 +293,8 @@ async function ghostdepSandboxedPage() {
       pill = await readPill();
     }
     check('panel appears on a sandboxed page', !!pill && /to check/.test(pill), pill);
+    const flashed = await showInPage();
+    check('"Show in page" highlights the file on a sandboxed page', flashed === 'PRE:ghostdep-flash', flashed);
     const opened = ctx.waitForEvent('page', { timeout: 8000 }).then((p) => p.url(), () => null);
     await clickRegistryLink();
     const url = await opened;

@@ -44,3 +44,24 @@ pre[data-ghostdep="warn"]::after,
 code[data-ghostdep="warn"]::after {
   background: #8a5a00;
 }
+
+/* "Show in page": a brief highlight so the button visibly does something even when no scrolling is needed. */
+[data-ghostdep-flash] {
+  animation: ghostdep-flash 1.6s ease-out 1;
+}
+@keyframes ghostdep-flash {
+  0%,
+  55% {
+    box-shadow: 0 0 0 5px #f5c518;
+    background-color: rgba(245, 197, 24, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 5px rgba(245, 197, 24, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-ghostdep-flash] {
+    animation: none;
+    box-shadow: 0 0 0 5px #f5c518;
+  }
+}

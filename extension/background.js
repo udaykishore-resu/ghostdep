@@ -136,7 +136,16 @@ async function checkAll(items) {
   return out;
 }
 
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+// Registry pages the panel may ask to open. Anything else is ignored.
+const OPENABLE = ['https://pypi.org/project/', 'https://www.npmjs.com/package/', 'https://crates.io/crates/'];
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg && msg.type === 'ghostdep:open') {
+    if (typeof msg.url === 'string' && msg.url.length < 400 && OPENABLE.some((p) => msg.url.startsWith(p)) && sender.tab) {
+      chrome.tabs.create({ url: msg.url, index: sender.tab.index + 1, openerTabId: sender.tab.id }).catch(() => {});
+    }
+    return false;
+  }
   if (!msg || msg.type !== 'ghostdep:check' || !Array.isArray(msg.items)) return false;
   checkAll(msg.items).then(
     (results) => sendResponse({ ok: true, results }),

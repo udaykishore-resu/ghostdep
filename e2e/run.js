@@ -217,11 +217,75 @@ async function ghostdepFileView() {
   }
 }
 
+// GitHub serves raw files with a `sandbox` policy: page scripts are off and links cannot open new tabs.
+// Page-side evaluate() is blocked there too, so this test looks at the page through the extension itself.
+async function ghostdepSandboxedPage() {
+  console.log('\n=== GhostDep on a sandboxed raw-file page (copy of the extension with the host pre-granted) ===');
+  const copy = fs.mkdtempSync(path.join(os.tmpdir(), 'ghostdep-copy-'));
+  fs.cpSync(EXT, copy, { recursive: true });
+  const mf = JSON.parse(fs.readFileSync(path.join(copy, 'manifest.json'), 'utf8'));
+  mf.host_permissions.push('https://raw.githubusercontent.com/*');
+  fs.writeFileSync(path.join(copy, 'manifest.json'), JSON.stringify(mf, null, 2));
+  const { ctx, sw } = await launch(copy);
+  try {
+    const body = JSON.stringify({ name: '@acme/app', dependencies: { '@acme/shared': '*', '@cdktf/provider-google': '^16.12.1', react: '^18' } }, null, 2);
+    await ctx.route('https://raw.githubusercontent.com/**', (r) =>
+      r.fulfill({ contentType: 'text/plain; charset=utf-8', headers: { 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox" }, body })
+    );
+    await ctx.route('https://www.npmjs.com/**', (r) => r.fulfill({ contentType: 'text/html', body: '<title>registry stub</title>' }));
+    const page = await ctx.newPage();
+    await page.goto('https://raw.githubusercontent.com/acme/app/main/package.json');
+    // Runs inside the tab through the extension (the page's own script context is sandboxed off).
+    const readPill = () =>
+      sw.evaluate(async () => {
+        const [tab] = await chrome.tabs.query({ url: 'https://raw.githubusercontent.com/*' });
+        const r = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => {
+            const h = document.querySelector('ghostdep-panel');
+            return h ? h.shadowRoot.querySelector('.pill').textContent : null;
+          },
+        });
+        return r[0].result;
+      });
+    const clickRegistryLink = () =>
+      sw.evaluate(async () => {
+        const [tab] = await chrome.tabs.query({ url: 'https://raw.githubusercontent.com/*' });
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => {
+            const r = document.querySelector('ghostdep-panel').shadowRoot;
+            if (!r.querySelector('.card')) r.querySelector('.pill').click();
+            r.querySelector('a.btn').click();
+          },
+        });
+      });
+    await sw.evaluate(async () => {
+      const [tab] = await chrome.tabs.query({ url: 'https://raw.githubusercontent.com/*' });
+      await chrome.scripting.insertCSS({ target: { tabId: tab.id }, files: ['content.css'] });
+      await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['lib/popular.js', 'lib/core.js', 'content.js'] });
+    });
+    let pill = null;
+    for (let i = 0; i < 40 && !pill; i++) {
+      await page.waitForTimeout(500);
+      pill = await readPill();
+    }
+    check('panel appears on a sandboxed page', !!pill && /to check/.test(pill), pill);
+    const opened = ctx.waitForEvent('page', { timeout: 8000 }).then((p) => p.url(), () => null);
+    await clickRegistryLink();
+    const url = await opened;
+    check('"Open on npm" opens the registry page in a new tab despite the sandbox', url === 'https://www.npmjs.com/package/@cdktf/provider-google', url);
+  } finally {
+    await ctx.close();
+  }
+}
+
 (async () => {
   try {
     await ghostdep();
     await ghostdepOnDemand();
     await ghostdepFileView();
+    await ghostdepSandboxedPage();
   } catch (e) {
     console.error('HARNESS ERROR', e);
     process.exitCode = 2;

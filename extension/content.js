@@ -211,6 +211,17 @@
             a.href = v.url;
             a.target = '_blank';
             a.rel = 'noopener noreferrer';
+            // Some pages (GitHub's raw file view) are served sandboxed, which silently blocks links that open
+            // a new tab. The extension opens the tab itself, so the link works everywhere.
+            a.addEventListener('click', (ev) => {
+              ev.preventDefault();
+              const fallback = () => window.open(v.url, '_blank', 'noopener');
+              try {
+                chrome.runtime.sendMessage({ type: 'ghostdep:open', url: v.url }).catch(fallback);
+              } catch (_) {
+                fallback();
+              }
+            });
             acts.appendChild(a);
           }
           li.appendChild(acts);

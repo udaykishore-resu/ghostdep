@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "GhostDep — catches packages your AI made up",
+  "short_name": "GhostDep",
+  "version": "0.2.1",
+  "description": "Checks pip, npm and cargo install commands in AI chat answers and flags packages that are missing, brand new, or look-alikes.",
+  "minimum_chrome_version": "111",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "GhostDep",
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://pypi.org/*",
+    "https://registry.npmjs.org/*",
+    "https://api.npmjs.org/*",
+    "https://crates.io/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://claude.ai/*",
+        "https://gemini.google.com/*",
+        "https://aistudio.google.com/*",
+        "https://copilot.microsoft.com/*",
+        "https://github.com/copilot/*",
+        "https://www.perplexity.ai/*",
+        "https://chat.deepseek.com/*",
+        "https://grok.com/*",
+        "https://chat.mistral.ai/*",
+        "https://poe.com/*"
+      ],
+      "js": [
+        "lib/popular.js",
+        "lib/core.js",
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

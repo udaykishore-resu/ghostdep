@@ -1,0 +1,46 @@
+/* Flags are CSS-generated content on the page's own elements: nothing is inserted into the
+   chat app's DOM, and the label text is never part of what gets selected or copied. */
+pre[data-ghostdep],
+code[data-ghostdep] {
+  outline: 2px solid #8b949e !important;
+  outline-offset: 2px;
+}
+pre[data-ghostdep="danger"],
+code[data-ghostdep="danger"] {
+  outline-color: #e5484d !important;
+}
+pre[data-ghostdep="warn"],
+code[data-ghostdep="warn"] {
+  outline-color: #d29922 !important;
+}
+pre[data-ghostdep]::after,
+code[data-ghostdep]::after {
+  content: attr(data-ghostdep-label);
+  font: 600 12px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #ffffff;
+  background: #5f6368;
+  border-radius: 6px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  -webkit-user-select: none;
+  user-select: none;
+}
+pre[data-ghostdep]::after {
+  display: block;
+  position: sticky;
+  left: 0;
+  margin: 8px 0 0;
+  padding: 6px 10px;
+}
+code[data-ghostdep]::after {
+  margin-left: 6px;
+  padding: 1px 7px;
+}
+pre[data-ghostdep="danger"]::after,
+code[data-ghostdep="danger"]::after {
+  background: #b3261e;
+}
+pre[data-ghostdep="warn"]::after,
+code[data-ghostdep="warn"]::after {
+  background: #8a5a00;
+}

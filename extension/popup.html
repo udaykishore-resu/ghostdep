@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>GhostDep</title>
+    <style>
+      :root { color-scheme: light dark; --fg: #1f2328; --mut: #59636e; --bg: #ffffff; --line: #d1d9e0; --btn: #1f6feb; }
+      @media (prefers-color-scheme: dark) { :root { --fg: #e8eaed; --mut: #9aa0a6; --bg: #16181d; --line: #3c4043; --btn: #2f81f7; } }
+      body { margin: 0; padding: 14px; width: 300px; background: var(--bg); color: var(--fg);
+        font: 13px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+      h1 { font-size: 15px; margin: 0 0 6px; }
+      p { margin: 0 0 10px; color: var(--mut); }
+      button { width: 100%; padding: 8px 10px; border: 0; border-radius: 6px; background: var(--btn); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+      button:disabled { opacity: 0.6; cursor: default; }
+      button:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+      #status { margin: 10px 0 0; min-height: 1.5em; color: var(--fg); }
+    </style>
+  </head>
+  <body>
+    <h1>GhostDep</h1>
+    <p>Runs by itself on ChatGPT, Claude, Gemini, Copilot, Perplexity, DeepSeek, Grok, Mistral and Poe. On any other page, scan on demand.</p>
+    <button id="scan" type="button">Scan this page</button>
+    <p id="status" role="status" aria-live="polite"></p>
+    <script src="popup.js"></script>
+  </body>
+</html>

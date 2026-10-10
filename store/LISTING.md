@@ -26,18 +26,18 @@ GhostDep checks the packages an AI assistant tells you to install, before you in
 AI assistants sometimes invent package names that sound right but do not exist. Attackers register those names and wait for someone to paste the install command. GhostDep reads the install commands in an answer and looks each package up on the real registry.
 
 What it flags
-- Packages that do not exist on PyPI, npm or crates.io
+- Packages that do not exist on the registry
 - Packages first published in the last 30 days
 - Names one edit away from a well-known package, with the likely intended name
-- Python import names used as package names (sklearn, cv2, yaml)
-- npx commands that belong to a differently named package (npx tsc)
-- npm packages marked deprecated
+- A Python import name used where the package name belongs
+- A command that belongs to a differently named package
+- Packages the registry marks as deprecated
 
 What it reads
-pip, uv, pipx, poetry, npm, pnpm, yarn, bun, npx and cargo commands, plus package.json and requirements.txt blocks, Dockerfile RUN lines and CI run steps.
+Install commands for Python, JavaScript and Rust packages, and dependency lists shown in code blocks.
 
 Where it runs
-Automatically on ChatGPT, Claude, Gemini, AI Studio, Copilot, Perplexity, DeepSeek, Grok, Mistral and Poe. On any other page, click the toolbar icon and choose "Scan this page".
+Automatically on popular AI chat sites. On any other page, click the toolbar icon and choose "Scan this page". The full list of supported sites and commands is on the project page.
 
 Privacy
 Only package names are sent, only to the public registry they would be installed from, and well-known names are never sent. No chat text, no analytics, no account.

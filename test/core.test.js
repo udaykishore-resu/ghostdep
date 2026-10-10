@@ -140,3 +140,23 @@ test('deprecated packages are warned even when heavily downloaded', () => {
   assert.equal(v.level, 'warn');
   assert.match(v.reasons.join(' '), /deprecated on npm/);
 });
+
+test('workspace siblings in a package.json are not reported as invented', () => {
+  const pj = JSON.stringify({ name: '@cdk-mastery/cdktf-gcp', dependencies: { '@cdk-mastery/shared': '*', '@cdktf/provider-google': '^16', constructs: '^10' } });
+  const items = C.extractInstalls(pj);
+  assert.deepEqual(items, [
+    { eco: 'npm', name: '@cdk-mastery/shared', sibling: true },
+    { eco: 'npm', name: '@cdktf/provider-google' },
+    { eco: 'npm', name: 'constructs' },
+  ]);
+  assert.equal(C.keyOf(items[0]), 'npm:@cdk-mastery/shared#ws');
+  const v = C.assess('npm', '@cdk-mastery/shared', { exists: false }, NOW, { sibling: true });
+  assert.equal(v.level, 'warn');
+  assert.match(v.title, /workspace package/);
+  // The same missing name from an install command is still treated as invented.
+  assert.equal(C.assess('npm', '@cdk-mastery/shared', { exists: false }, NOW).level, 'danger');
+  // An unscoped manifest name has no siblings.
+  assert.deepEqual(C.extractInstalls(JSON.stringify({ name: 'app', dependencies: { '@x/y': '1' } })), [{ eco: 'npm', name: '@x/y' }]);
+  // A sibling that DOES exist publicly is assessed normally.
+  assert.equal(C.assess('npm', '@scope/real', { exists: true, created: NOW - 2000 * DAY, downloads: 90000, downloadsWindow: 'week' }, NOW, { sibling: true }).level, 'ok');
+});

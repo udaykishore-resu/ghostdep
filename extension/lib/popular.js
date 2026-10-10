@@ -45,7 +45,7 @@ python-telegram-bot slack-sdk twilio sendgrid stripe paypalrestsdk boto3-stubs t
 minimist semver yargs dotenv rxjs vue next webpack @babel/core @babel/preset-env @babel/preset-react @babel/preset-typescript
 eslint prettier jest mocha chai sinon vite vitest rollup esbuild tailwindcss postcss autoprefixer sass classnames prop-types
 redux react-redux @reduxjs/toolkit react-router react-router-dom zustand zod yup formik react-hook-form @tanstack/react-query
-@tanstack/react-table swr graphql apollo-server @apollo/client socket.io socket.io-client ws cors body-parser cookie-parser
+@tanstack/react-table swr graphql  @apollo/client socket.io socket.io-client ws cors body-parser cookie-parser
 morgan helmet jsonwebtoken bcrypt bcryptjs passport mongoose mongodb pg mysql mysql2 sqlite3 better-sqlite3 redis ioredis
 sequelize prisma @prisma/client typeorm knex nodemon ts-node tsx concurrently cross-env rimraf mkdirp chokidar inquirer ora
 yargs-parser node-fetch got superagent cheerio puppeteer playwright @playwright/test jsdom date-fns dayjs luxon ramda
@@ -55,21 +55,21 @@ framer-motion motion lucide-react clsx tailwind-merge class-variance-authority o
 @langchain/core ai @ai-sdk/openai @modelcontextprotocol/sdk hono fastify koa @nestjs/core @nestjs/common @nestjs/cli nuxt svelte
 @sveltejs/kit astro @angular/core @angular/cli electron husky lint-staged eslint-config-prettier eslint-plugin-react
 @typescript-eslint/parser @typescript-eslint/eslint-plugin turbo lerna nx pm2 winston pino bunyan joi ajv validator marked
-markdown-it highlight.js handlebars ejs pug xml2js yaml js-yaml csv-parse papaparse pdf-lib pdfkit nodemailer stripe aws-sdk
+markdown-it highlight.js handlebars ejs pug xml2js yaml js-yaml csv-parse papaparse pdf-lib pdfkit nodemailer stripe 
 @aws-sdk/client-s3 firebase firebase-admin @supabase/supabase-js drizzle-orm drizzle-kit execa shelljs open p-limit lru-cache
 bluebird colors color preact strip-ansi supports-color ansi-styles escape-string-regexp mime mime-types iconv-lite safe-buffer
 readable-stream through2 core-js regenerator-runtime webpack-cli webpack-dev-server babel-loader css-loader style-loader
 html-webpack-plugin create-react-app create-vite create-next-app serve http-server live-server json-server zx npm pnpm yarn
 react-native expo @react-navigation/native react-query @vitejs/plugin-react @testing-library/react @testing-library/jest-dom
 cypress storybook @storybook/react ts-jest supertest nock msw faker @faker-js/faker dotenv-cli env-cmd express-rate-limit
-express-session express-validator connect-redis passport-jwt passport-local argon2 crypto-js node-cron cron bull bullmq
+express-session express-validator connect-redis passport-jwt passport-local argon2  node-cron cron bull bullmq
 amqplib kafkajs mqtt aws-cdk aws-cdk-lib constructs cdktf serverless wrangler vercel netlify-cli firebase-tools
 @google/generative-ai @google/genai ollama cohere-ai @pinecone-database/pinecone chromadb @huggingface/inference
 @radix-ui/react-dialog @headlessui/react @heroicons/react react-icons daisyui shadcn react-select react-datepicker
-react-toastify sonner react-markdown remark rehype mdx gray-matter next-auth @auth/core @clerk/nextjs lucia iron-session
+react-toastify sonner react-markdown remark rehype mdx gray-matter next-auth @auth/core @clerk/nextjs  iron-session
 next-themes i18next react-i18next mobx mobx-react jotai recoil valtio xstate immutable lodash-es rambda fp-ts effect neverthrow
 meow cac kleur picocolors boxen figlet cli-table3 prompts enquirer listr2 tar archiver adm-zip unzipper
-fast-glob globby micromatch minimatch picomatch ignore find-up resolve pkg-dir read-pkg semver-diff`;
+fast-glob globby micromatch minimatch picomatch ignore find-up resolve  read-pkg `;
 
   const crates = `serde serde_json tokio rand clap syn quote proc-macro2 libc log regex anyhow thiserror futures bytes reqwest
 hyper itertools lazy_static once_cell chrono uuid tracing async-trait axum actix-web tower tonic prost rayon crossbeam
@@ -114,6 +114,9 @@ ripgrep bat fd-find exa tokei hyperfine just mdbook wasm-pack trunk leptos yew d
     openssl: 'pyopenssl',
     googleapiclient: 'google-api-python-client',
   };
+
+  // Deprecated packages are deliberately NOT on the npm list above: listed names skip the registry lookup,
+  // which is the only place a deprecation notice is seen.
 
   // Commands people run with npx whose package has a DIFFERENT name. `npx tsc` only works when the
   // real package is already installed; otherwise npm downloads whatever package is literally called `tsc`.

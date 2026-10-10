@@ -120,10 +120,11 @@ async function checkAll(items) {
       const it = queue[next++];
       if (!it || !LOOKUP[it.eco] || typeof it.name !== 'string' || it.name.length > 214) continue;
       const run = it.run === true && !!Core.binAlias(it.name);
-      const key = Core.keyOf({ eco: it.eco, name: it.name, run });
+      const sibling = it.sibling === true && it.eco === 'npm' && it.name.startsWith('@');
+      const key = Core.keyOf({ eco: it.eco, name: it.name, run, sibling });
       // Well-known names and known command names are answered locally: no request leaves the browser for them.
       const meta = run || Core.isPopular(it.eco, it.name) ? null : await lookup(it.eco, it.name);
-      out[key] = Core.assess(it.eco, it.name, meta, Date.now(), { run });
+      out[key] = Core.assess(it.eco, it.name, meta, Date.now(), { run, sibling });
       out[key].url = run
         ? Core.registryUrl(it.eco, Core.binAlias(it.name))
         : meta && meta.exists === false

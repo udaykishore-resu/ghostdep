@@ -179,10 +179,49 @@ async function ghostdepOnDemand() {
   }
 }
 
+// GitHub's file view has no code block at all. This serves a page of the same shape at a github.com URL.
+async function ghostdepFileView() {
+  console.log('\n=== GhostDep on a GitHub-style file view (copy of the extension with github.com pre-granted) ===');
+  const copy = fs.mkdtempSync(path.join(os.tmpdir(), 'ghostdep-copy-'));
+  fs.cpSync(EXT, copy, { recursive: true });
+  const mf = JSON.parse(fs.readFileSync(path.join(copy, 'manifest.json'), 'utf8'));
+  mf.host_permissions.push('https://github.com/*');
+  fs.writeFileSync(path.join(copy, 'manifest.json'), JSON.stringify(mf, null, 2));
+  const { ctx, sw } = await launch(copy);
+  try {
+    const html = fs.readFileSync(path.join(__dirname, 'fixtures/github-file.html'), 'utf8');
+    await ctx.route('https://github.com/acme/**', (r) => r.fulfill({ contentType: 'text/html', body: html }));
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(String(e)));
+    await page.goto('https://github.com/acme/mono/blob/main/cdktf-gcp/package.json');
+    check('fixture has no <pre> or <code>, like the real file view', (await page.evaluate(() => document.querySelectorAll('pre, code').length)) === 0);
+    await sw.evaluate(async () => {
+      const [tab] = await chrome.tabs.query({ url: 'https://github.com/*' });
+      await chrome.scripting.insertCSS({ target: { tabId: tab.id }, files: ['content.css'] });
+      await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['lib/popular.js', 'lib/core.js', 'content.js'] });
+    });
+    await page.waitForFunction(() => document.querySelector('ghostdep-panel'), null, { timeout: 60000 }).catch(() => {});
+    const pill = await page.evaluate(() => { const h = document.querySelector('ghostdep-panel'); return h ? h.shadowRoot.querySelector('.pill').textContent : null; });
+    check('file view is read from its read-only text area', !!pill && /to check/.test(pill) && /ok/.test(pill), pill);
+    check('workspace sibling is a caution, not "high risk"', !!pill && !/high risk/.test(pill), pill);
+    await page.evaluate(() => document.querySelector('ghostdep-panel').shadowRoot.querySelector('.pill').click());
+    const rows = await page.evaluate(() => [...document.querySelector('ghostdep-panel').shadowRoot.querySelectorAll('.row')].map((e) => e.textContent));
+    const ws = rows.find((r) => r.startsWith('@cdk-mastery/shared'));
+    check('sibling row explains itself', !!ws && /workspace package/.test(ws), ws && ws.slice(0, 120));
+    check('deprecated providers are listed', rows.filter((r) => /Marked deprecated on npm/.test(r)).length === 3, rows.length + ' rows');
+    check('an editable text area on the same page is still ignored', !rows.some((r) => /typed-in-a-comment-box/.test(r)));
+    check('no page errors', errors.length === 0, errors);
+  } finally {
+    await ctx.close();
+  }
+}
+
 (async () => {
   try {
     await ghostdep();
     await ghostdepOnDemand();
+    await ghostdepFileView();
   } catch (e) {
     console.error('HARNESS ERROR', e);
     process.exitCode = 2;

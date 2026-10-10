@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "GhostDep — catches packages your AI made up",
   "short_name": "GhostDep",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Checks pip, npm and cargo install commands in AI chat answers and flags packages that are missing, brand new, or look-alikes.",
   "minimum_chrome_version": "111",
   "icons": {

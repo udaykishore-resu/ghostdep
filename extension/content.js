@@ -21,15 +21,26 @@
   let host = null;
   let shadow = null;
 
+  // Read-only text areas hold file contents, not typing. GitHub's file view keeps the whole file in one
+  // (marked aria-readonly) and draws the visible lines as separate elements with no <pre> around them.
+  const READONLY_TEXT = 'textarea[readonly], textarea[aria-readonly="true"]';
+
   function blocks() {
     const out = [];
-    for (const el of document.querySelectorAll('pre, code')) {
+    for (const el of document.querySelectorAll('pre, code, ' + READONLY_TEXT)) {
       if (el.tagName === 'CODE' && el.closest('pre')) continue; // the <pre> covers it
       if (host && host.contains(el)) continue;
-      if (el.closest('textarea, [contenteditable="true"], [contenteditable=""]')) continue; // what the user is typing
+      if (el.tagName !== 'TEXTAREA' && el.closest('textarea, [contenteditable="true"], [contenteditable=""]')) continue; // what the user is typing
       out.push(el);
     }
     return out;
+  }
+
+  function textOf(el) {
+    if (el.tagName === 'TEXTAREA') return el.value || '';
+    // Chat UIs put a language label and a "Copy" button inside the <pre>; only the <code> child is the code.
+    const src = el.tagName === 'PRE' ? el.querySelector('code') || el : el;
+    return src.textContent || '';
   }
 
   function collect() {
@@ -37,9 +48,7 @@
     const byKey = new Map();
     let unstable = false;
     for (const el of blocks()) {
-      // Chat UIs put a language label and a "Copy" button inside the <pre>; only the <code> child is the code.
-      const src = el.tagName === 'PRE' ? el.querySelector('code') || el : el;
-      const text = src.textContent || '';
+      const text = textOf(el);
       let s = snap.get(el);
       if (!s || s.text !== text) {
         s = { text, t: now, installs: null };
@@ -57,7 +66,7 @@
       }
       for (const it of s.installs) {
         const key = Core.keyOf(it);
-        if (!byKey.has(key)) byKey.set(key, { key, eco: it.eco, name: it.name, run: !!it.run, els: [] });
+        if (!byKey.has(key)) byKey.set(key, { key, eco: it.eco, name: it.name, run: !!it.run, sibling: !!it.sibling, els: [] });
         byKey.get(key).els.push(el);
       }
     }
@@ -77,6 +86,7 @@
       const v = results.get(f.key);
       if (!v || v.level === 'ok') continue;
       for (const el of f.els) {
+        if (el.tagName === 'TEXTAREA') continue; // no outline or generated label possible; the panel carries the result
         const w = worst.get(el) || { level: v.level, names: [] };
         if (RANK[v.level] < RANK[w.level]) w.level = v.level;
         w.names.push(f.name + ' — ' + v.title + (v.suggest ? ' (did you mean ' + v.suggest + '?)' : ''));
@@ -254,7 +264,7 @@
     for (const f of need) pending.add(f.key);
     let sent;
     try {
-      sent = chrome.runtime.sendMessage({ type: 'ghostdep:check', items: need.map((f) => ({ eco: f.eco, name: f.name, run: f.run })) });
+      sent = chrome.runtime.sendMessage({ type: 'ghostdep:check', items: need.map((f) => ({ eco: f.eco, name: f.name, run: f.run, sibling: f.sibling })) });
     } catch (_) {
       dead = true; // extension was reloaded; this copy of the script is orphaned
       return;

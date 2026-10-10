@@ -187,7 +187,7 @@
     return (Popular && Object.prototype.hasOwnProperty.call(Popular.npmBinAliases, name) && Popular.npmBinAliases[name]) || null;
   }
 
-  const keyOf = (it) => it.eco + ':' + it.name + (it.run ? '#run' : '');
+  const keyOf = (it) => it.eco + ':' + it.name + (it.run ? '#run' : '') + (it.sibling ? '#ws' : '');
 
   // ---------- manifest-style blocks ----------
 
@@ -201,13 +201,17 @@
       return [];
     }
     const out = [];
+    // A dependency in the same @scope as the manifest's own name is almost always a workspace sibling.
+    const own = obj && typeof obj.name === 'string' ? /^(@[^/]+)\//.exec(obj.name.toLowerCase()) : null;
+    const ownScope = own ? own[1] + '/' : null;
     for (const field of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
       const deps = obj && obj[field];
       if (!deps || typeof deps !== 'object') continue;
       for (const [name, ver] of Object.entries(deps)) {
         if (typeof ver === 'string' && NOT_REGISTRY.test(ver)) continue;
         const n = toName('npm', name);
-        if (n) out.push({ eco: 'npm', name: n });
+        if (!n) continue;
+        out.push(ownScope && n.startsWith(ownScope) ? { eco: 'npm', name: n, sibling: true } : { eco: 'npm', name: n });
       }
     }
     return out;
@@ -355,6 +359,19 @@
         title: 'could not check',
         reasons: ['Lookup on ' + reg + ' failed' + (meta && meta.error ? ' (' + meta.error + ')' : '') + '. Not verified either way.'],
         suggest: alias || near,
+      };
+    }
+
+    if (!meta.exists && opts && opts.sibling) {
+      const scope = name.slice(0, name.indexOf('/'));
+      return {
+        level: 'warn',
+        title: 'not on ' + reg + ' (workspace package?)',
+        reasons: [
+          'No public package with this name. It shares the ' + scope + ' scope with the package that depends on it, so it is probably a local workspace package. ' +
+            'If this manifest came from an AI answer rather than your own repository, treat the name as invented.',
+        ],
+        suggest: null,
       };
     }
 

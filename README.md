@@ -18,6 +18,7 @@ Language models invent plausible package names. Attackers register those names (
 | `✖ high risk` | First published under 30 days ago, or one edit away from a well-known package and young or barely used |
 | `⚠ check before installing` | Under 180 days old, very few downloads, a Python import name used as a package name (`sklearn`, `cv2`, `yaml`), a near-miss of a well-known name, or marked deprecated on npm (the registry's message is quoted) |
 | `⚠ command, not a package` | `npx tsc`, `npx ng`, `npx firebase` and 33 similar: the command ships in a differently named package (`typescript`, `@angular/cli`, `firebase-tools`). Dropped when the page also installs that package |
+| `⚠ not on npm (workspace package?)` | A `package.json` dependency that is missing from npm but shares the `@scope` of the package that depends on it. Almost always a local workspace sibling |
 | `? could not check` | Lookup failed. Never shown as a pass |
 
 Understood commands: `pip` / `pip3` / `python -m pip`, `uv add`, `uv pip install`, `uvx`, `pipx`, `poetry add`, `pdm add`, `pipenv install`, `npm install|i|add|exec|create|init`, `pnpm add|dlx|create`, `yarn add|dlx|create`, `bun add|x|create`, `npx`, `bunx`, `cargo add|install`. Also `package.json` dependency blocks, `requirements.txt` blocks, Dockerfile `RUN` lines and CI `run:` steps.
@@ -29,6 +30,8 @@ Understood commands: `pip` / `pip3` / `python -m pip`, `uv add`, `uv pip install
 3. Ask any supported chat for a project with dependencies. Flags appear under the code blocks, with a summary at the bottom right.
 
 Runs by itself on ChatGPT, Claude, Gemini, AI Studio, Copilot, Perplexity, DeepSeek, Grok, Mistral and Poe. Anywhere else (a blog post, Stack Overflow, a README): click the toolbar icon, then **Scan this page**.
+
+That includes a `package.json` or `requirements.txt` opened on GitHub, in either the normal file view or the raw view, and a local file opened as `file://` once **Allow access to file URLs** is switched on for the extension.
 
 ## Repo layout
 
@@ -55,7 +58,7 @@ content.js                                 background.js (service worker)
 ```
 
 - **Streaming-safe.** A block is only parsed after its text has been stable for 1.5 seconds, so half-typed names are never looked up.
-- **Your own typing is ignored.** Text inside `textarea` and `contenteditable` is skipped.
+- **Your own typing is ignored.** Text inside editable `textarea` and `contenteditable` elements is skipped. Read-only text areas are read, because that is where GitHub's file view keeps the file.
 - **No DOM insertion in the chat app.** Flags are CSS `::after` content plus an outline; the panel lives in a shadow root outside `<body>`.
 
 ## Develop
@@ -79,6 +82,7 @@ See [PRIVACY.md](PRIVACY.md). The only data that leaves the browser is a package
 
 ## Limits
 
+- A lookup that fails stays "could not check" until the page is reloaded; it is not retried.
 - Existence, age, popularity and npm deprecation only. It does not download or scan package code. An old, popular, compromised package passes.
 - PyPI's JSON API has no download counts, so PyPI verdicts rest on existence, age and name similarity.
 - The well-known lists in `extension/lib/popular.js` are hand-maintained (about 890 names, each verified to exist). A legitimate package one edit away from a listed one gets a `⚠` unless it is heavily downloaded.
